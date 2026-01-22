@@ -2162,12 +2162,14 @@ class MainWindow(QMainWindow):
         # Frameless window
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, False)
-        self.setMinimumSize(420, 620)
-        self.resize(420, 620)
+        self.setMinimumSize(800, 620)  # Larger minimum for chat
         self.setStyleSheet(f"background: {C['bg_dark']}; border-radius: 15px;")
         
         self.is_maximized = False
         self.normal_geometry = None
+        
+        # Load saved window size
+        self.load_window_size()
 
         self.auth = AuthManager()
         self.signals = SignalEmitter()
@@ -2181,6 +2183,61 @@ class MainWindow(QMainWindow):
         if self.auth.is_logged_in():
             # Check access on app start
             self.check_and_show_dash()
+    
+    def load_window_size(self):
+        """Load saved window size from config"""
+        from config import DATA_DIR
+        import json
+        
+        settings_file = os.path.join(DATA_DIR, "window_settings.json")
+        try:
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r') as f:
+                    settings = json.load(f)
+                    width = settings.get('width', 900)
+                    height = settings.get('height', 650)
+                    x = settings.get('x')
+                    y = settings.get('y')
+                    
+                    self.resize(width, height)
+                    
+                    if x is not None and y is not None:
+                        self.move(x, y)
+                    else:
+                        # Center on screen
+                        screen = QApplication.desktop().screenGeometry()
+                        x = (screen.width() - width) // 2
+                        y = (screen.height() - height) // 2
+                        self.move(x, y)
+            else:
+                # Default size - wider for chat
+                self.resize(900, 650)
+                # Center on screen
+                screen = QApplication.desktop().screenGeometry()
+                x = (screen.width() - 900) // 2
+                y = (screen.height() - 650) // 2
+                self.move(x, y)
+        except Exception as e:
+            print(f"Error loading window size: {e}")
+            self.resize(900, 650)
+    
+    def save_window_size(self):
+        """Save current window size to config"""
+        from config import DATA_DIR
+        import json
+        
+        settings_file = os.path.join(DATA_DIR, "window_settings.json")
+        try:
+            settings = {
+                'width': self.width(),
+                'height': self.height(),
+                'x': self.x(),
+                'y': self.y()
+            }
+            with open(settings_file, 'w') as f:
+                json.dump(settings, f)
+        except Exception as e:
+            print(f"Error saving window size: {e}")
 
     def setup_ui(self):
         # Main container
@@ -2235,6 +2292,26 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         self.confirm_dialog.setGeometry(0, 0, self.width(), self.height())
         self.tc_dialog.setGeometry(0, 0, self.width(), self.height())
+        
+        # Save window size when resized (with debounce)
+        if hasattr(self, '_resize_timer'):
+            self._resize_timer.stop()
+        else:
+            self._resize_timer = QTimer()
+            self._resize_timer.setSingleShot(True)
+            self._resize_timer.timeout.connect(self.save_window_size)
+        self._resize_timer.start(500)  # Save after 500ms of no resize
+    
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        # Save window position when moved (with debounce)
+        if hasattr(self, '_move_timer'):
+            self._move_timer.stop()
+        else:
+            self._move_timer = QTimer()
+            self._move_timer.setSingleShot(True)
+            self._move_timer.timeout.connect(self.save_window_size)
+        self._move_timer.start(500)  # Save after 500ms of no move
 
     def show_close_confirm(self):
         self.confirm_dialog.setGeometry(0, 0, self.width(), self.height())
@@ -2269,6 +2346,9 @@ class MainWindow(QMainWindow):
         self.confirm_dialog.hide()
     
     def do_close(self):
+        # Save window size before closing
+        self.save_window_size()
+        
         if self.dash.capturing:
             self.task.check_out()
         self.ss.stop()
