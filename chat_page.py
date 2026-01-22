@@ -55,55 +55,63 @@ class SimpleMessageBubble(QFrame):
         layout.addWidget(time_label)
 
 
-class SimpleUserCard(QFrame):
-    """Compact user card - just name and avatar"""
+class CleanUserCard(QFrame):
+    """Ultra clean user card - minimal design"""
     clicked = pyqtSignal(dict)
     
-    def __init__(self, user_data, color):
+    def __init__(self, user_data, is_active=False):
         super().__init__()
         self.user_data = user_data
+        self.is_active = is_active
         self.setCursor(Qt.PointingHandCursor)
-        self.setFixedHeight(55)  # More compact
-        self.setStyleSheet(f"background: {color}; border-radius: 12px;")
+        self.setFixedHeight(50)
+        
+        # Clean transparent background with subtle hover
+        if is_active:
+            bg_color = "rgba(255,255,255,0.12)"
+        else:
+            bg_color = "transparent"
+        
+        self.setStyleSheet(f"""
+            QFrame {{
+                background: {bg_color};
+                border-radius: 10px;
+            }}
+            QFrame:hover {{
+                background: rgba(255,255,255,0.08);
+            }}
+        """)
         
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 6, 10, 6)  # Tighter padding
-        layout.setSpacing(8)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(10)
         
-        # Avatar (smaller)
-        avatar = QLabel("👤")
-        avatar.setFixedSize(30, 30)  # Smaller avatar
-        avatar.setAlignment(Qt.AlignCenter)
-        avatar.setStyleSheet("color: white; font-size: 18px;")
-        layout.addWidget(avatar)
-        
-        # User info (compact)
-        info_layout = QVBoxLayout()
-        info_layout.setSpacing(1)
-        
-        name = user_data.get('full_name', user_data.get('username', 'User'))
-        # Truncate long names
-        if len(name) > 12:
-            name = name[:12] + "..."
-        name_label = QLabel(name)
-        name_label.setStyleSheet("color: white; font-size: 12px; font-weight: 600;")
-        info_layout.addWidget(name_label)
-        
+        # Online indicator (dot)
         is_online = user_data.get('is_online', False)
-        status_text = "🟢" if is_online else "⚫"
-        status_label = QLabel(status_text)
-        status_label.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 10px;")
-        info_layout.addWidget(status_label)
+        online_dot = QLabel("●")
+        online_dot.setFixedSize(12, 12)
+        online_dot.setAlignment(Qt.AlignCenter)
+        if is_online:
+            online_dot.setStyleSheet(f"color: {C['green']}; font-size: 16px; background: transparent;")
+        else:
+            online_dot.setStyleSheet("color: rgba(255,255,255,0.3); font-size: 16px; background: transparent;")
+        layout.addWidget(online_dot)
         
-        layout.addLayout(info_layout, 1)
+        # User name (clean)
+        name = user_data.get('full_name', user_data.get('username', 'User'))
+        if len(name) > 14:
+            name = name[:14] + "..."
+        name_label = QLabel(name)
+        name_label.setStyleSheet(f"color: {C['text_white']}; font-size: 13px; font-weight: 500; background: transparent;")
+        layout.addWidget(name_label, 1)
         
-        # Unread badge (smaller)
+        # Unread badge (minimal)
         unread_count = user_data.get('unread_count', 0)
         if unread_count > 0:
             badge = QLabel(str(unread_count))
-            badge.setFixedSize(24, 24)
+            badge.setFixedSize(20, 20)
             badge.setAlignment(Qt.AlignCenter)
-            badge.setStyleSheet("background: rgba(255,255,255,0.3); color: white; border-radius: 12px; font-size: 11px; font-weight: bold;")
+            badge.setStyleSheet(f"background: {C['green']}; color: white; border-radius: 10px; font-size: 10px; font-weight: bold;")
             layout.addWidget(badge)
     
     def mousePressEvent(self, event):
@@ -186,46 +194,26 @@ class ChatPage(QWidget):
         layout.addWidget(self.container)
     
     def create_user_list(self):
-        """Create compact user list - narrow width"""
+        """Create clean minimal user list - no search, just users"""
         panel = QWidget()
-        panel.setFixedWidth(160)  # Reduced to 160 for more chat space
+        panel.setFixedWidth(160)
         panel.setStyleSheet("background: transparent;")
         
         panel_layout = QVBoxLayout(panel)
-        panel_layout.setContentsMargins(10, 0, 5, 0)  # Tighter margins
-        panel_layout.setSpacing(6)  # Less spacing
+        panel_layout.setContentsMargins(15, 0, 5, 0)
+        panel_layout.setSpacing(0)
         
-        # Search (smaller)
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍")
-        self.search_input.setFixedHeight(35)  # Smaller height
-        self.search_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: rgba(255,255,255,0.08);
-                color: {C['text_white']};
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 10px;
-                padding: 0 10px;
-                font-size: 12px;
-            }}
-            QLineEdit:focus {{
-                border-color: {C['green']};
-            }}
-        """)
-        self.search_input.textChanged.connect(self.filter_users)
-        panel_layout.addWidget(self.search_input)
-        
-        # User list scroll
+        # User list scroll - clean, no search
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea {background: transparent; border: none;} QScrollBar:vertical {background: transparent; width: 6px;} QScrollBar::handle:vertical {background: rgba(255,255,255,0.3); border-radius: 3px;}")
+        scroll.setStyleSheet("QScrollArea {background: transparent; border: none;} QScrollBar:vertical {background: transparent; width: 4px;} QScrollBar::handle:vertical {background: rgba(255,255,255,0.2); border-radius: 2px;}")
         
         self.user_list_widget = QWidget()
         self.user_list_widget.setStyleSheet("background: transparent;")
         self.user_list_layout = QVBoxLayout(self.user_list_widget)
         self.user_list_layout.setContentsMargins(0, 0, 0, 0)
-        self.user_list_layout.setSpacing(8)  # Tighter spacing
+        self.user_list_layout.setSpacing(8)
         self.user_list_layout.addStretch()
         
         scroll.setWidget(self.user_list_widget)
@@ -373,18 +361,15 @@ class ChatPage(QWidget):
         
         if not filtered_users:
             empty = QLabel("No users")
-            empty.setStyleSheet(f"color: {C['text_gray']}; font-size: 13px; padding: 20px; background: transparent;")
+            empty.setStyleSheet(f"color: {C['text_gray']}; font-size: 12px; padding: 20px; background: transparent;")
             empty.setAlignment(Qt.AlignCenter)
             self.user_list_layout.insertWidget(0, empty)
         else:
-            colors = [C['card_green'], C['card_orange'], C['card_red'], C['card_purple']]
-            for i, user in enumerate(filtered_users):
-                card = SimpleUserCard(user, colors[i % len(colors)])
+            for user in filtered_users:
+                is_active = user.get('id') == self.current_user_id
+                card = CleanUserCard(user, is_active)
                 card.clicked.connect(self.select_user)
                 self.user_list_layout.insertWidget(self.user_list_layout.count() - 1, card)
-    
-    def filter_users(self, text):
-        self.display_users(text)
     
     def select_user(self, user_data):
         self.current_user_id = user_data.get('id')
@@ -399,6 +384,9 @@ class ChatPage(QWidget):
         
         self.send_button.setEnabled(True)
         self.load_conversation()
+        
+        # Refresh user list to show active state
+        self.display_users()
         
         if self.chat_manager.connected:
             self.chat_manager.mark_as_read(self.current_user_id)
@@ -509,7 +497,7 @@ class ChatPage(QWidget):
             status_text = "🟢 Online" if is_online else "⚫ Offline"
             self.chat_user_status.setText(status_text)
         
-        self.display_users(self.search_input.text())
+        self.display_users()
     
     def on_typing_indicator(self, data):
         sender_id = data.get('sender_id')
