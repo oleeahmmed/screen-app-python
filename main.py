@@ -1153,7 +1153,7 @@ class MenuOverlay(QFrame):
 class Dashboard(QWidget):
     logout_signal = pyqtSignal()
 
-    def __init__(self, auth, ss, sync, cleanup, task, signals):
+    def __init__(self, auth, ss, sync, cleanup, task, signals, notification_manager):
         super().__init__()
         self.auth = auth
         self.ss = ss
@@ -1161,6 +1161,7 @@ class Dashboard(QWidget):
         self.cleanup = cleanup
         self.task = task
         self.signals = signals
+        self.notification_manager = notification_manager
         self.capturing = False
         self.username = "User"
         self.days_remaining = 0
@@ -1170,6 +1171,9 @@ class Dashboard(QWidget):
         # Initialize chat components
         self.chat_manager = ChatManager(self.auth)
         self.chat_api = ChatAPI(self.auth)
+        
+        # Connect chat notifications
+        self.chat_manager.message_received.connect(self.on_chat_message_received)
         
         self.init_ui()
         self.setup()
@@ -1394,6 +1398,45 @@ class Dashboard(QWidget):
         self.capturing = False
         log_main("✅ Work stopped")
         log_main("=" * 50)
+        return ok, msg
+    
+    def on_chat_message_received(self, data):
+        """Handle incoming chat message for notifications"""
+        try:
+            # Check if chat page is currently active
+            is_chat_active = self.pages.currentIndex() == 2  # Chat is index 2
+            
+            # Get current user info
+            current_user_id = None
+            if self.auth.user_info:
+                current_user_id = self.auth.user_info.get('id')
+            
+            sender_id = data.get('sender_id')
+            receiver_id = data.get('receiver_id')
+            
+            # Only show notification if message is for current user
+            if receiver_id != current_user_id:
+                return
+            
+            # Check if currently chatting with this sender
+            is_chatting_with_sender = False
+            if is_chat_active and hasattr(self.chat_page, 'current_user_id'):
+                is_chatting_with_sender = self.chat_page.current_user_id == sender_id
+            
+            # Show notification if not actively chatting with sender
+            if not is_chatting_with_sender:
+                sender_name = data.get('sender_username', 'Someone')
+                message = data.get('message', '')
+                
+                # Show notification
+                self.notification_manager.show_chat_notification(sender_name, message)
+                
+                # Update unread count (simplified - you can make this more accurate)
+                current_count = self.notification_manager.unread_count
+                self.notification_manager.update_badge(current_count + 1)
+                
+        except Exception as e:
+            print(f"Notification error: {e}")
         return ok, msg
 
     def on_capture(self, files):
@@ -2223,6 +2266,10 @@ class MainWindow(QMainWindow):
         self.sync = SyncManager(self.auth)
         self.cleanup = CleanupManager()
         self.task = TaskManager(self.auth)
+        
+        # Notification Manager
+        from notification_manager import NotificationManager
+        self.notification_manager = NotificationManager(self)
 
         self.setup_ui()
 
@@ -2310,7 +2357,7 @@ class MainWindow(QMainWindow):
         self.login.login_success.connect(self.on_login_success)
         self.stack.addWidget(self.login)
 
-        self.dash = Dashboard(self.auth, self.ss, self.sync, self.cleanup, self.task, self.signals)
+        self.dash = Dashboard(self.auth, self.ss, self.sync, self.cleanup, self.task, self.signals, self.notification_manager)
         self.dash.logout_signal.connect(self.show_login)
         self.stack.addWidget(self.dash)
         
