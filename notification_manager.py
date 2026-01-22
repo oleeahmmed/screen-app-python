@@ -163,10 +163,25 @@ class NotificationManager(QObject):
                 print(f"File exists: {os.path.exists(self.sound_big)}")  # Debug
                 
                 if os.path.exists(self.sound_big):
-                    self.sound_player_big.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_big)))
-                    self.sound_player_big.setVolume(80)  # 80% volume
-                    self.sound_player_big.play()
-                    print("✅ Big sound playing")  # Debug
+                    # Try QMediaPlayer first
+                    try:
+                        self.sound_player_big.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_big)))
+                        self.sound_player_big.setVolume(80)  # 80% volume
+                        self.sound_player_big.play()
+                        print("✅ Big sound playing with QMediaPlayer")  # Debug
+                    except Exception as e:
+                        print(f"⚠️ QMediaPlayer failed: {e}, trying aplay...")
+                        # Fallback to aplay (Linux)
+                        try:
+                            import subprocess
+                            subprocess.Popen(['aplay', self.sound_big], 
+                                           stdout=subprocess.DEVNULL, 
+                                           stderr=subprocess.DEVNULL)
+                            print("✅ Big sound playing with aplay")
+                        except Exception as e2:
+                            print(f"⚠️ aplay also failed: {e2}, using system beep")
+                            from PyQt5.QtWidgets import QApplication
+                            QApplication.beep()
                 else:
                     print(f"❌ Big sound file not found: {self.sound_big}")
                     from PyQt5.QtWidgets import QApplication
@@ -177,10 +192,23 @@ class NotificationManager(QObject):
                 print(f"File exists: {os.path.exists(self.sound_small)}")  # Debug
                 
                 if os.path.exists(self.sound_small):
-                    self.sound_player_small.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_small)))
-                    self.sound_player_small.setVolume(50)  # 50% volume (quieter)
-                    self.sound_player_small.play()
-                    print("✅ Small sound playing")  # Debug
+                    try:
+                        self.sound_player_small.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_small)))
+                        self.sound_player_small.setVolume(50)  # 50% volume (quieter)
+                        self.sound_player_small.play()
+                        print("✅ Small sound playing with QMediaPlayer")  # Debug
+                    except Exception as e:
+                        print(f"⚠️ QMediaPlayer failed: {e}, trying aplay...")
+                        try:
+                            import subprocess
+                            subprocess.Popen(['aplay', self.sound_small], 
+                                           stdout=subprocess.DEVNULL, 
+                                           stderr=subprocess.DEVNULL)
+                            print("✅ Small sound playing with aplay")
+                        except Exception as e2:
+                            print(f"⚠️ aplay also failed: {e2}, using system beep")
+                            from PyQt5.QtWidgets import QApplication
+                            QApplication.beep()
                 else:
                     print(f"⚠️ Small sound file not found: {self.sound_small}")
                     # Fallback to system beep
