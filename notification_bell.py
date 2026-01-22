@@ -1,7 +1,7 @@
 # notification_bell.py - Animated Notification Bell Icon
 
 from PyQt5.QtWidgets import QPushButton, QLabel
-from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty, QTimer, pyqtSignal
+from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, pyqtProperty, QTimer, pyqtSignal, Qt
 from PyQt5.QtGui import QFont
 
 
@@ -17,7 +17,7 @@ class NotificationBell(QPushButton):
         
         # Setup button
         self.setFixedSize(40, 40)
-        self.setCursor(0x0d)  # PointingHandCursor
+        self.setCursor(Qt.PointingHandCursor)
         self.update_style()
         
         # Animation
@@ -122,7 +122,7 @@ class NotificationBellWithBadge(QPushButton):
         
         # Setup button
         self.setFixedSize(50, 40)
-        self.setCursor(0x0d)  # PointingHandCursor
+        self.setCursor(Qt.PointingHandCursor)
         
         # Bell icon
         self.setText("🔔")
@@ -131,7 +131,7 @@ class NotificationBellWithBadge(QPushButton):
         # Badge label (overlay)
         self.badge = QLabel(self)
         self.badge.setFixedSize(18, 18)
-        self.badge.setAlignment(0x84)  # AlignCenter
+        self.badge.setAlignment(Qt.AlignCenter)
         self.badge.move(28, 5)
         self.badge.hide()
         
