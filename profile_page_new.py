@@ -316,8 +316,8 @@ class ProfilePage(QWidget):
         self.username = name
         self.days_remaining = days_remaining
         self.username_display.setText(name)
-        if hasattr(self, 'header'):
-            self.header.set_username(name, days_remaining)
+        # Header will be updated when page is shown
+        # HeaderWidget doesn't have set_username method
     
     def showEvent(self, event):
         """Load profile when page is shown"""
