@@ -19,7 +19,8 @@ from cleanup import CleanupManager
 from task_manager import TaskManager
 from config import SCREENSHOTS_DIR
 from ui_components import GradientWidget, GlassCard, HeaderWidget, BottomNavBar, C
-from pages import DashboardPage, TasksPage, ProfilePage
+from pages import DashboardPage, TasksPage
+from profile_page_new import ProfilePage
 from chat_manager import ChatManager
 from chat_api import ChatAPI
 from chat_page import ChatPage
@@ -1287,11 +1288,7 @@ class Dashboard(QWidget):
                 # Chat page
                 self.pages.setCurrentIndex(2)
             elif idx == 3:
-                # Load profile data when switching to profile page
-                try:
-                    self.profile_page.load_profile_data()
-                except Exception as e:
-                    print(f"Error loading profile: {e}")
+                # Profile page - will auto-load on showEvent
                 self.pages.setCurrentIndex(3)
         except Exception as e:
             print(f"Error switching page: {e}")
@@ -1337,21 +1334,6 @@ class Dashboard(QWidget):
             self.chat_manager.connect()
         except Exception as e:
             print(f"Error connecting to chat: {e}")
-        
-        # Pre-load profile data in background
-        self.load_profile_data_async()
-    
-    def load_profile_data_async(self):
-        """Load profile data in background without blocking UI"""
-        import threading
-        def load():
-            try:
-                self.profile_page.load_profile_data()
-            except Exception as e:
-                print(f"Error pre-loading profile: {e}")
-        
-        thread = threading.Thread(target=load, daemon=True)
-        thread.start()
 
     def start_work(self):
         from debug_logger import log_main
