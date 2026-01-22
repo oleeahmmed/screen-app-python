@@ -1,8 +1,8 @@
-# chat_page.py - Simple Clean Chat (Matching Tasks Style)
+# chat_page.py - WhatsApp Style Chat
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QScrollArea, QFrame
+    QScrollArea, QFrame, QSplitter
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from datetime import datetime
@@ -10,33 +10,55 @@ from datetime import datetime
 from ui_components import GradientWidget, HeaderWidget, C
 
 
-class SimpleMessageBubble(QFrame):
-    """Simple message bubble like TaskCard"""
+class WhatsAppMessageBubble(QWidget):
+    """WhatsApp style message bubble"""
     def __init__(self, message_data, is_sent=False):
         super().__init__()
-        self.setCursor(Qt.PointingHandCursor)
-        self.setFixedHeight(60)
+        self.setStyleSheet("background: transparent;")
         
-        # Use task card colors
+        # Main layout - align left or right
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(10, 2, 10, 2)
+        main_layout.setSpacing(0)
+        
         if is_sent:
-            color = C['card_green']
+            main_layout.addStretch()  # Push to right
+        
+        # Bubble container
+        bubble = QFrame()
+        bubble.setMaximumWidth(300)
+        
+        if is_sent:
+            # Sent message - green bubble on right
+            bubble.setStyleSheet(f"""
+                QFrame {{
+                    background: {C['green']};
+                    border-radius: 12px;
+                    border-top-right-radius: 2px;
+                }}
+            """)
         else:
-            color = C['card_purple']
+            # Received message - gray bubble on left
+            bubble.setStyleSheet(f"""
+                QFrame {{
+                    background: rgba(255,255,255,0.12);
+                    border-radius: 12px;
+                    border-top-left-radius: 2px;
+                }}
+            """)
         
-        self.setStyleSheet(f"background: {color}; border-radius: 15px;")
-        
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(15, 10, 15, 10)
-        layout.setSpacing(10)
+        bubble_layout = QVBoxLayout(bubble)
+        bubble_layout.setContentsMargins(12, 8, 12, 8)
+        bubble_layout.setSpacing(4)
         
         # Message text
         message_text = message_data.get('message', '')
         text_label = QLabel(message_text)
         text_label.setWordWrap(True)
-        text_label.setStyleSheet("color: white; font-size: 14px; font-weight: 500;")
-        layout.addWidget(text_label, 1)
+        text_label.setStyleSheet("color: white; font-size: 14px; background: transparent;")
+        bubble_layout.addWidget(text_label)
         
-        # Time
+        # Time at bottom right
         created_at = message_data.get('created_at', '')
         if created_at:
             try:
@@ -51,8 +73,14 @@ class SimpleMessageBubble(QFrame):
             time_str = datetime.now().strftime('%I:%M %p')
         
         time_label = QLabel(time_str)
-        time_label.setStyleSheet("color: rgba(255,255,255,0.8); font-size: 11px;")
-        layout.addWidget(time_label)
+        time_label.setAlignment(Qt.AlignRight)
+        time_label.setStyleSheet("color: rgba(255,255,255,0.7); font-size: 10px; background: transparent;")
+        bubble_layout.addWidget(time_label)
+        
+        main_layout.addWidget(bubble)
+        
+        if not is_sent:
+            main_layout.addStretch()  # Push to left
 
 
 class CleanUserCard(QFrame):
@@ -175,28 +203,39 @@ class ChatPage(QWidget):
         
         container_layout.addWidget(title_widget)
         
-        # Content
-        content_widget = QWidget()
-        content_widget.setStyleSheet("background: transparent;")
-        content_layout = QHBoxLayout(content_widget)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(0)
+        # Content with resizable splitter
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setStyleSheet("""
+            QSplitter::handle {
+                background: rgba(255,255,255,0.1);
+                width: 2px;
+            }
+            QSplitter::handle:hover {
+                background: rgba(255,255,255,0.3);
+            }
+        """)
         
         # User list
         self.user_list_container = self.create_user_list()
-        content_layout.addWidget(self.user_list_container)
+        splitter.addWidget(self.user_list_container)
         
         # Chat area
         self.chat_container = self.create_chat_area()
-        content_layout.addWidget(self.chat_container, 1)
+        splitter.addWidget(self.chat_container)
         
-        container_layout.addWidget(content_widget, 1)
+        # Set initial sizes (user list: 160px, chat: rest)
+        splitter.setSizes([160, 260])
+        splitter.setStretchFactor(0, 0)  # User list doesn't stretch
+        splitter.setStretchFactor(1, 1)  # Chat area stretches
+        
+        container_layout.addWidget(splitter, 1)
         layout.addWidget(self.container)
     
     def create_user_list(self):
-        """Create clean minimal user list - no search, just users"""
+        """Create clean minimal user list - resizable"""
         panel = QWidget()
-        panel.setFixedWidth(160)
+        panel.setMinimumWidth(120)  # Minimum width
+        panel.setMaximumWidth(300)  # Maximum width
         panel.setStyleSheet("background: transparent;")
         
         panel_layout = QVBoxLayout(panel)
@@ -258,8 +297,8 @@ class ChatPage(QWidget):
         self.messages_widget = QWidget()
         self.messages_widget.setStyleSheet("background: transparent;")
         self.messages_layout = QVBoxLayout(self.messages_widget)
-        self.messages_layout.setContentsMargins(0, 0, 0, 0)
-        self.messages_layout.setSpacing(12)
+        self.messages_layout.setContentsMargins(10, 10, 10, 10)
+        self.messages_layout.setSpacing(4)  # Tight spacing like WhatsApp
         self.messages_layout.addStretch()
         
         self.messages_scroll.setWidget(self.messages_widget)
@@ -418,7 +457,7 @@ class ChatPage(QWidget):
             
             for msg in self.messages:
                 is_sent = msg.get('sender_username') == current_username
-                bubble = SimpleMessageBubble(msg, is_sent)
+                bubble = WhatsAppMessageBubble(msg, is_sent)
                 self.messages_layout.insertWidget(self.messages_layout.count() - 1, bubble)
         
         QTimer.singleShot(100, self.scroll_to_bottom)
@@ -475,7 +514,7 @@ class ChatPage(QWidget):
         if (sender_id == self.current_user_id and receiver_id == current_user_id) or (sender_id == current_user_id and receiver_id == self.current_user_id):
             self.messages.append(data)
             is_sent = sender_id == current_user_id
-            bubble = SimpleMessageBubble(data, is_sent)
+            bubble = WhatsAppMessageBubble(data, is_sent)
             self.messages_layout.insertWidget(self.messages_layout.count() - 1, bubble)
             self.scroll_to_bottom()
             
