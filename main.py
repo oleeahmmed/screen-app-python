@@ -1175,6 +1175,7 @@ class Dashboard(QWidget):
         
         # Connect chat notifications
         self.chat_manager.message_received.connect(self.on_chat_message_received)
+        self.chat_manager.task_notification.connect(self.on_task_notification_received)
         
         self.init_ui()
         self.setup()
@@ -1448,6 +1449,41 @@ class Dashboard(QWidget):
             # Update dashboard page header
             if hasattr(self.dash_page, 'header') and hasattr(self.dash_page.header, 'notification_bell'):
                 self.dash_page.header.notification_bell.set_count(count)
+    
+    def on_task_notification_received(self, data):
+        """Handle incoming task notification from WebSocket"""
+        try:
+            # Get current user info
+            current_user_id = None
+            if self.auth.user_info:
+                current_user_id = self.auth.user_info.get('id')
+            
+            assigned_to_id = data.get('assigned_to_id')
+            
+            # Only show notification if task is for current user
+            if assigned_to_id != current_user_id:
+                return
+            
+            task_name = data.get('task_name', 'New Task')
+            task_description = data.get('task_description', '')
+            assigned_by = data.get('assigned_by')
+            
+            # Show task notification (always uses big sound)
+            self.notification_manager.show_task_notification(
+                task_name,
+                task_description[:100],  # Limit length
+                assigned_by
+            )
+            
+            # Refresh task list if on task page
+            if self.pages.currentIndex() == 1:  # Task page is index 1
+                if hasattr(self.task_page, 'load_tasks'):
+                    self.task_page.load_tasks()
+            
+            print(f"Task notification: {task_name} from {assigned_by}")
+            
+        except Exception as e:
+            print(f"Task notification error: {e}")
             
             # Update tasks page header
             if hasattr(self.task_page, 'header') and hasattr(self.task_page.header, 'notification_bell'):
@@ -2569,6 +2605,24 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, e):
         e.accept()
+    
+    def changeEvent(self, event):
+        """Track window state changes (minimize, restore)"""
+        if event.type() == event.WindowStateChange:
+            # Update notification manager about app focus
+            is_minimized = self.isMinimized()
+            self.notification_manager.set_app_focused(not is_minimized)
+        super().changeEvent(event)
+    
+    def focusInEvent(self, event):
+        """Track when app gains focus"""
+        self.notification_manager.set_app_focused(True)
+        super().focusInEvent(event)
+    
+    def focusOutEvent(self, event):
+        """Track when app loses focus"""
+        self.notification_manager.set_app_focused(False)
+        super().focusOutEvent(event)
     
     def fetch_work_duration(self):
         """Fetch current attendance and work duration from API"""

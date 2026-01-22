@@ -1,9 +1,9 @@
 # notification_manager.py - Desktop Notification Manager
 
 from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction
-from PyQt5.QtCore import QObject, pyqtSignal, QTimer
+from PyQt5.QtCore import QObject, pyqtSignal, QTimer, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor, QFont
-from PyQt5.QtMultimedia import QSound
+from PyQt5.QtMultimedia import QSound, QMediaPlayer, QMediaContent
 import os
 
 
@@ -20,6 +20,16 @@ class NotificationManager(QObject):
         self.unread_count = 0
         self.sound_enabled = True
         self.notifications_enabled = True
+        self.app_is_focused = True  # Track if app is in focus
+        
+        # Setup sound players (two separate players for simultaneous playback)
+        self.sound_player_big = QMediaPlayer()
+        self.sound_player_small = QMediaPlayer()
+        
+        # Sound files
+        sounds_dir = os.path.join(os.path.dirname(__file__), "sounds")
+        self.sound_big = os.path.join(sounds_dir, "mixkit-happy-bells-notification-937.wav")
+        self.sound_small = os.path.join(sounds_dir, "notification-small.wav")
         
         # Setup system tray
         self.setup_tray_icon()
@@ -116,8 +126,8 @@ class NotificationManager(QObject):
         if not self.notifications_enabled:
             return
         
-        # Show system tray notification
-        if self.tray_icon:
+        # Show system tray notification only if app is not focused
+        if self.tray_icon and not self.app_is_focused:
             icon = QSystemTrayIcon.Information
             if notification_type == "chat":
                 icon = QSystemTrayIcon.Information
@@ -131,21 +141,54 @@ class NotificationManager(QObject):
                 5000  # 5 seconds
             )
         
-        # Play sound
-        if self.sound_enabled:
+        # Play sound (task notifications handle their own sound)
+        if self.sound_enabled and notification_type != "task":
             self.play_sound(notification_type)
     
-    def play_sound(self, notification_type):
-        """Play notification sound"""
+    def play_sound(self, notification_type, force_big=False):
+        """Play notification sound - big or small based on app focus"""
         try:
-            # Use system beep (cross-platform)
-            from PyQt5.QtWidgets import QApplication
-            QApplication.beep()
+            # Determine which sound to play
+            # Big sound: when app is minimized/background OR force_big (task notifications)
+            # Small sound: when app is open but on different page
+            use_big_sound = force_big or not self.app_is_focused
+            
+            if use_big_sound:
+                # Play big notification sound
+                if os.path.exists(self.sound_big):
+                    self.sound_player_big.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_big)))
+                    self.sound_player_big.setVolume(80)  # 80% volume
+                    self.sound_player_big.play()
+                else:
+                    print(f"Big sound file not found: {self.sound_big}")
+                    from PyQt5.QtWidgets import QApplication
+                    QApplication.beep()
+            else:
+                # Play small notification sound (WhatsApp style)
+                if os.path.exists(self.sound_small):
+                    self.sound_player_small.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_small)))
+                    self.sound_player_small.setVolume(50)  # 50% volume (quieter)
+                    self.sound_player_small.play()
+                else:
+                    print(f"Small sound file not found: {self.sound_small}")
+                    # Fallback to system beep
+                    from PyQt5.QtWidgets import QApplication
+                    QApplication.beep()
         except Exception as e:
             print(f"Sound play error: {e}")
     
-    def show_chat_notification(self, sender_name, message_preview):
-        """Show chat message notification"""
+    def show_chat_notification(self, sender_name, message_preview, is_current_chat=False):
+        """Show chat message notification
+        
+        Args:
+            sender_name: Name of message sender
+            message_preview: Preview of the message
+            is_current_chat: True if user is currently viewing this chat
+        """
+        # Don't show notification if user is actively viewing this chat
+        if is_current_chat and self.app_is_focused:
+            return
+        
         self.show_notification(
             f"💬 {sender_name}",
             message_preview[:100],  # Limit message length
@@ -153,14 +196,22 @@ class NotificationManager(QObject):
             {"type": "chat", "sender": sender_name}
         )
     
-    def show_task_notification(self, task_name, task_info):
-        """Show task notification"""
+    def show_task_notification(self, task_name, task_info, assigned_by=None):
+        """Show task notification - always uses big sound"""
+        title = f"📋 New Task"
+        if assigned_by:
+            title = f"📋 Task from {assigned_by}"
+        
         self.show_notification(
-            f"📋 New Task",
+            title,
             f"{task_name}\n{task_info}",
             "task",
             {"type": "task", "name": task_name}
         )
+        
+        # Always play big sound for tasks (force_big=True)
+        if self.sound_enabled:
+            self.play_sound("task", force_big=True)
     
     def on_tray_activated(self, reason):
         """Handle tray icon activation"""
@@ -200,3 +251,8 @@ class NotificationManager(QObject):
         """Show tray icon"""
         if self.tray_icon:
             self.tray_icon.show()
+    
+    def set_app_focused(self, is_focused):
+        """Update app focus state"""
+        self.app_is_focused = is_focused
+        print(f"App focus changed: {is_focused}")

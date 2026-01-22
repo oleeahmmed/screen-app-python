@@ -16,6 +16,7 @@ class ChatManager(QObject):
     user_status_changed = pyqtSignal(dict)
     messages_read = pyqtSignal(dict)
     typing_indicator = pyqtSignal(dict)
+    task_notification = pyqtSignal(dict)  # New signal for task notifications
     connection_status = pyqtSignal(bool, str)
     
     def __init__(self, auth):
@@ -95,6 +96,8 @@ class ChatManager(QObject):
                 self.messages_read.emit(data)
             elif msg_type == 'typing_indicator':
                 self.typing_indicator.emit(data)
+            elif msg_type == 'task_notification':
+                self.task_notification.emit(data)
                 
         except Exception as e:
             print(f"Message parse error: {e}")
