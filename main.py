@@ -300,6 +300,7 @@ class TaskCard(QFrame):
 class HeaderWidget(QWidget):
     menu_clicked = pyqtSignal()
     subscription_clicked = pyqtSignal()
+    notification_clicked = pyqtSignal()
     
     def __init__(self, username="User", days_remaining=0):
         super().__init__()
@@ -326,18 +327,18 @@ class HeaderWidget(QWidget):
             sub_btn.clicked.connect(self.subscription_clicked.emit)
             layout.addWidget(sub_btn)
         
+        # Notification bell (animated)
+        from notification_bell import NotificationBellWithBadge
+        self.notification_bell = NotificationBellWithBadge()
+        self.notification_bell.clicked_signal.connect(self.notification_clicked.emit)
+        layout.addWidget(self.notification_bell)
+        
         menu_btn = QPushButton("☰")
         menu_btn.setFixedSize(40, 40)
         menu_btn.setCursor(Qt.PointingHandCursor)
         menu_btn.setStyleSheet(f"QPushButton {{background: transparent; color: {C['text_white']}; border: none; font-size: 24px;}}")
         menu_btn.clicked.connect(self.menu_clicked.emit)
         layout.addWidget(menu_btn)
-        
-        bell_btn = QPushButton("🔔")
-        bell_btn.setFixedSize(40, 40)
-        bell_btn.setCursor(Qt.PointingHandCursor)
-        bell_btn.setStyleSheet(f"QPushButton {{background: transparent; color: {C['text_white']}; border: none; font-size: 22px;}}")
-        layout.addWidget(bell_btn)
 
 
 
@@ -1431,12 +1432,36 @@ class Dashboard(QWidget):
                 # Show notification
                 self.notification_manager.show_chat_notification(sender_name, message)
                 
-                # Update unread count (simplified - you can make this more accurate)
+                # Update unread count
                 current_count = self.notification_manager.unread_count
                 self.notification_manager.update_badge(current_count + 1)
                 
+                # Update bell icon in header (all pages)
+                self.update_notification_bell(current_count + 1)
+                
         except Exception as e:
             print(f"Notification error: {e}")
+    
+    def update_notification_bell(self, count):
+        """Update notification bell on all page headers"""
+        try:
+            # Update dashboard page header
+            if hasattr(self.dash_page, 'header') and hasattr(self.dash_page.header, 'notification_bell'):
+                self.dash_page.header.notification_bell.set_count(count)
+            
+            # Update tasks page header
+            if hasattr(self.task_page, 'header') and hasattr(self.task_page.header, 'notification_bell'):
+                self.task_page.header.notification_bell.set_count(count)
+            
+            # Update chat page header (if it has one)
+            # Chat page doesn't use HeaderWidget, so skip
+            
+            # Update profile page header
+            if hasattr(self.profile_page, 'header') and hasattr(self.profile_page.header, 'notification_bell'):
+                self.profile_page.header.notification_bell.set_count(count)
+                
+        except Exception as e:
+            print(f"Bell update error: {e}")
         return ok, msg
 
     def on_capture(self, files):

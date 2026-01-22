@@ -138,9 +138,9 @@ class NotificationManager(QObject):
     def play_sound(self, notification_type):
         """Play notification sound"""
         try:
-            # Simple beep for now (you can add custom sound files)
-            # QSound.play("sounds/notification.wav")
-            pass  # Placeholder - add sound file later
+            # Use system beep (cross-platform)
+            from PyQt5.QtWidgets import QApplication
+            QApplication.beep()
         except Exception as e:
             print(f"Sound play error: {e}")
     
