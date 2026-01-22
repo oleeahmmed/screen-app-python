@@ -111,18 +111,18 @@ class BottomNavBar(QFrame):
         layout.setContentsMargins(8, 0, 8, 0)
         layout.setSpacing(4)
         
-        # Navigation items with modern icons
+        # Navigation items with better icons and proper text
         self.nav_buttons = []
         nav_items = [
-            ("📊", "Attendance", "#10B981"),  # Green
-            ("✓", "Tasks", "#F59E0B"),        # Orange
-            ("💬", "Chat", "#3B82F6")         # Blue
+            ("🏢", "Work", "#10B981"),      # Green - Work/Attendance
+            ("📋", "Tasks", "#F59E0B"),     # Orange - Tasks
+            ("💬", "Chat", "#3B82F6")       # Blue - Chat
         ]
         
         for i, (icon, label, color) in enumerate(nav_items):
             # Create button
             btn = QPushButton()
-            btn.setFixedSize(110, 45)
+            btn.setFixedSize(100, 45)  # Slightly smaller for better fit
             btn.setCursor(Qt.PointingHandCursor)
             btn.setProperty('nav_index', i)
             btn.setProperty('nav_color', color)
@@ -136,13 +136,13 @@ class BottomNavBar(QFrame):
             # Icon
             icon_label = QLabel(icon)
             icon_label.setAlignment(Qt.AlignCenter)
-            icon_label.setStyleSheet("background: transparent; font-size: 20px;")
+            icon_label.setStyleSheet("background: transparent; font-size: 18px;")
             btn_layout.addWidget(icon_label)
             
             # Label
             text_label = QLabel(label)
             text_label.setAlignment(Qt.AlignCenter)
-            text_label.setStyleSheet("background: transparent; font-size: 11px; font-weight: 600;")
+            text_label.setStyleSheet("background: transparent; font-size: 10px; font-weight: 600;")
             btn_layout.addWidget(text_label)
             
             # Inactive style - transparent
@@ -188,8 +188,8 @@ class BottomNavBar(QFrame):
                             stop:0 {self.lighten_color(color)}, stop:1 {color});
                     }}
                 """)
-                icon_label.setStyleSheet("background: transparent; font-size: 20px; color: white;")
-                text_label.setStyleSheet("background: transparent; font-size: 11px; font-weight: 700; color: white; letter-spacing: 0.5px;")
+                icon_label.setStyleSheet("background: transparent; font-size: 18px; color: white;")
+                text_label.setStyleSheet("background: transparent; font-size: 10px; font-weight: 700; color: white; letter-spacing: 0.3px;")
             else:
                 # Inactive state - transparent
                 btn.setStyleSheet(f"""
@@ -202,8 +202,8 @@ class BottomNavBar(QFrame):
                         background: rgba(255, 255, 255, 0.05);
                     }}
                 """)
-                icon_label.setStyleSheet("background: transparent; font-size: 20px; color: rgba(255, 255, 255, 0.5);")
-                text_label.setStyleSheet("background: transparent; font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.5);")
+                icon_label.setStyleSheet("background: transparent; font-size: 18px; color: rgba(255, 255, 255, 0.5);")
+                text_label.setStyleSheet("background: transparent; font-size: 10px; font-weight: 600; color: rgba(255, 255, 255, 0.5);")
     
     def lighten_color(self, hex_color):
         """Lighten a hex color"""
