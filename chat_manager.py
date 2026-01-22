@@ -88,6 +88,8 @@ class ChatManager(QObject):
             data = json.loads(message)
             msg_type = data.get('type')
             
+            print(f"📨 WebSocket message received: type={msg_type}")  # Debug
+            
             if msg_type == 'chat_message':
                 self.message_received.emit(data)
             elif msg_type == 'user_status':
@@ -97,10 +99,15 @@ class ChatManager(QObject):
             elif msg_type == 'typing_indicator':
                 self.typing_indicator.emit(data)
             elif msg_type == 'task_notification':
+                print(f"🔔 Task notification data: {data}")  # Debug
                 self.task_notification.emit(data)
+            else:
+                print(f"⚠️ Unknown message type: {msg_type}")  # Debug
                 
         except Exception as e:
-            print(f"Message parse error: {e}")
+            print(f"❌ Message parse error: {e}")
+            import traceback
+            traceback.print_exc()
     
     def on_error(self, ws, error):
         """WebSocket error"""

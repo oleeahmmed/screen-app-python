@@ -1455,6 +1455,8 @@ class Dashboard(QWidget):
     def on_task_notification_received(self, data):
         """Handle incoming task notification from WebSocket"""
         try:
+            print(f"🔔 Task notification received: {data}")  # Debug
+            
             # Get current user info
             current_user_id = None
             if self.auth.user_info:
@@ -1462,13 +1464,18 @@ class Dashboard(QWidget):
             
             assigned_to_id = data.get('assigned_to_id')
             
+            print(f"Current user ID: {current_user_id}, Assigned to: {assigned_to_id}")  # Debug
+            
             # Only show notification if task is for current user
             if assigned_to_id != current_user_id:
+                print("Task not for current user, skipping notification")
                 return
             
             task_name = data.get('task_name', 'New Task')
             task_description = data.get('task_description', '')
             assigned_by = data.get('assigned_by')
+            
+            print(f"Showing task notification: {task_name} from {assigned_by}")  # Debug
             
             # Show task notification (always uses big sound)
             self.notification_manager.show_task_notification(
@@ -1481,11 +1488,15 @@ class Dashboard(QWidget):
             if self.pages.currentIndex() == 1:  # Task page is index 1
                 if hasattr(self.task_page, 'load_tasks'):
                     self.task_page.load_tasks()
+                elif hasattr(self.task_page, 'refresh'):
+                    self.task_page.refresh()
             
-            print(f"Task notification: {task_name} from {assigned_by}")
+            print(f"✅ Task notification complete")
             
         except Exception as e:
-            print(f"Task notification error: {e}")
+            print(f"❌ Task notification error: {e}")
+            import traceback
+            traceback.print_exc()
             
             # Update tasks page header
             if hasattr(self.task_page, 'header') and hasattr(self.task_page.header, 'notification_bell'):

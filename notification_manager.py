@@ -148,34 +148,48 @@ class NotificationManager(QObject):
     def play_sound(self, notification_type, force_big=False):
         """Play notification sound - big or small based on app focus"""
         try:
+            print(f"🔊 play_sound called: type={notification_type}, force_big={force_big}, app_focused={self.app_is_focused}")  # Debug
+            
             # Determine which sound to play
             # Big sound: when app is minimized/background OR force_big (task notifications)
             # Small sound: when app is open but on different page
             use_big_sound = force_big or not self.app_is_focused
             
+            print(f"Using {'BIG' if use_big_sound else 'SMALL'} sound")  # Debug
+            
             if use_big_sound:
                 # Play big notification sound
+                print(f"Big sound file: {self.sound_big}")  # Debug
+                print(f"File exists: {os.path.exists(self.sound_big)}")  # Debug
+                
                 if os.path.exists(self.sound_big):
                     self.sound_player_big.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_big)))
                     self.sound_player_big.setVolume(80)  # 80% volume
                     self.sound_player_big.play()
+                    print("✅ Big sound playing")  # Debug
                 else:
-                    print(f"Big sound file not found: {self.sound_big}")
+                    print(f"❌ Big sound file not found: {self.sound_big}")
                     from PyQt5.QtWidgets import QApplication
                     QApplication.beep()
             else:
                 # Play small notification sound (WhatsApp style)
+                print(f"Small sound file: {self.sound_small}")  # Debug
+                print(f"File exists: {os.path.exists(self.sound_small)}")  # Debug
+                
                 if os.path.exists(self.sound_small):
                     self.sound_player_small.setMedia(QMediaContent(QUrl.fromLocalFile(self.sound_small)))
                     self.sound_player_small.setVolume(50)  # 50% volume (quieter)
                     self.sound_player_small.play()
+                    print("✅ Small sound playing")  # Debug
                 else:
-                    print(f"Small sound file not found: {self.sound_small}")
+                    print(f"⚠️ Small sound file not found: {self.sound_small}")
                     # Fallback to system beep
                     from PyQt5.QtWidgets import QApplication
                     QApplication.beep()
         except Exception as e:
-            print(f"Sound play error: {e}")
+            print(f"❌ Sound play error: {e}")
+            import traceback
+            traceback.print_exc()
     
     def show_chat_notification(self, sender_name, message_preview, is_current_chat=False):
         """Show chat message notification
@@ -198,9 +212,14 @@ class NotificationManager(QObject):
     
     def show_task_notification(self, task_name, task_info, assigned_by=None):
         """Show task notification - always uses big sound"""
+        print(f"🔔 show_task_notification called: {task_name}, from: {assigned_by}")  # Debug
+        
         title = f"📋 New Task"
         if assigned_by:
             title = f"📋 Task from {assigned_by}"
+        
+        print(f"Notification title: {title}")  # Debug
+        print(f"Sound enabled: {self.sound_enabled}")  # Debug
         
         self.show_notification(
             title,
@@ -211,7 +230,10 @@ class NotificationManager(QObject):
         
         # Always play big sound for tasks (force_big=True)
         if self.sound_enabled:
+            print("Playing big sound for task...")  # Debug
             self.play_sound("task", force_big=True)
+        else:
+            print("Sound disabled, skipping")  # Debug
     
     def on_tray_activated(self, reason):
         """Handle tray icon activation"""
