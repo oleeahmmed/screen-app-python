@@ -136,13 +136,13 @@ class BottomNavBar(QFrame):
             # Icon
             icon_label = QLabel(icon)
             icon_label.setAlignment(Qt.AlignCenter)
-            icon_label.setStyleSheet("background: transparent; font-size: 18px;")
+            icon_label.setStyleSheet("background: transparent; border: none; font-size: 18px;")
             btn_layout.addWidget(icon_label)
             
             # Label
             text_label = QLabel(label)
             text_label.setAlignment(Qt.AlignCenter)
-            text_label.setStyleSheet("background: transparent; font-size: 10px; font-weight: 600;")
+            text_label.setStyleSheet("background: transparent; border: none; font-size: 10px; font-weight: 600;")
             btn_layout.addWidget(text_label)
             
             # Inactive style - transparent
@@ -188,8 +188,8 @@ class BottomNavBar(QFrame):
                             stop:0 {self.lighten_color(color)}, stop:1 {color});
                     }}
                 """)
-                icon_label.setStyleSheet("background: transparent; font-size: 18px; color: white;")
-                text_label.setStyleSheet("background: transparent; font-size: 10px; font-weight: 700; color: white; letter-spacing: 0.3px;")
+                icon_label.setStyleSheet("background: transparent; border: none; font-size: 18px; color: white;")
+                text_label.setStyleSheet("background: transparent; border: none; font-size: 10px; font-weight: 700; color: white; letter-spacing: 0.3px;")
             else:
                 # Inactive state - transparent
                 btn.setStyleSheet(f"""
@@ -202,8 +202,8 @@ class BottomNavBar(QFrame):
                         background: rgba(255, 255, 255, 0.05);
                     }}
                 """)
-                icon_label.setStyleSheet("background: transparent; font-size: 18px; color: rgba(255, 255, 255, 0.5);")
-                text_label.setStyleSheet("background: transparent; font-size: 10px; font-weight: 600; color: rgba(255, 255, 255, 0.5);")
+                icon_label.setStyleSheet("background: transparent; border: none; font-size: 18px; color: rgba(255, 255, 255, 0.5);")
+                text_label.setStyleSheet("background: transparent; border: none; font-size: 10px; font-weight: 600; color: rgba(255, 255, 255, 0.5);")
     
     def lighten_color(self, hex_color):
         """Lighten a hex color"""
