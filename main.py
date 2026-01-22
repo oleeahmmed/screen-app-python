@@ -71,77 +71,97 @@ class GlassCard(QWidget):
 
 
 class BottomNavBar(QFrame):
+    """Modern sleek bottom navigation with floating pill design"""
     nav_clicked = pyqtSignal(int)
     
     def __init__(self, parent=None):
         super().__init__(parent)
         self.current_index = 0
-        self.setFixedHeight(65)
+        self.setFixedHeight(75)
+        
+        # Modern dark background with subtle gradient
         self.setStyleSheet(f"""
             QFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(13, 31, 53, 0.95),
-                    stop:1 rgba(10, 22, 40, 0.98));
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                    stop:0 rgba(15, 23, 42, 0.98),
+                    stop:1 rgba(10, 18, 35, 1));
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
             }}
         """)
         
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        # Main layout with padding
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 10, 20, 10)
+        main_layout.setSpacing(0)
         
-        # Navigation items with better icons
+        # Floating pill container
+        pill_container = QFrame()
+        pill_container.setFixedHeight(55)
+        pill_container.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(30, 41, 59, 0.8),
+                    stop:1 rgba(25, 35, 50, 0.8));
+                border-radius: 27px;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+        """)
+        
+        layout = QHBoxLayout(pill_container)
+        layout.setContentsMargins(8, 0, 8, 0)
+        layout.setSpacing(4)
+        
+        # Navigation items with modern icons
         self.nav_buttons = []
         nav_items = [
-            ("📊", "Attendance", C['green']),
-            ("✓", "Tasks", C['orange']),
-            ("💬", "Chat", C['header_blue'])
+            ("📊", "Attendance", "#10B981"),  # Green
+            ("✓", "Tasks", "#F59E0B"),        # Orange
+            ("💬", "Chat", "#3B82F6")         # Blue
         ]
         
         for i, (icon, label, color) in enumerate(nav_items):
-            # Create button container
+            # Create button
             btn = QPushButton()
-            btn.setFixedHeight(65)
+            btn.setFixedSize(110, 45)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setProperty('nav_index', i)
             btn.setProperty('nav_color', color)
             
             # Button content
-            btn_layout = QVBoxLayout(btn)
-            btn_layout.setContentsMargins(0, 8, 0, 8)
-            btn_layout.setSpacing(2)
+            btn_layout = QHBoxLayout(btn)
+            btn_layout.setContentsMargins(12, 0, 12, 0)
+            btn_layout.setSpacing(8)
             btn_layout.setAlignment(Qt.AlignCenter)
             
             # Icon
             icon_label = QLabel(icon)
             icon_label.setAlignment(Qt.AlignCenter)
-            icon_label.setStyleSheet("background: transparent; font-size: 22px;")
+            icon_label.setStyleSheet("background: transparent; font-size: 20px;")
             btn_layout.addWidget(icon_label)
             
             # Label
             text_label = QLabel(label)
             text_label.setAlignment(Qt.AlignCenter)
-            text_label.setStyleSheet("background: transparent; font-size: 10px; font-weight: 500;")
+            text_label.setStyleSheet("background: transparent; font-size: 11px; font-weight: 600;")
             btn_layout.addWidget(text_label)
             
-            # Inactive style
+            # Inactive style - transparent
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background: transparent;
                     border: none;
-                    color: {C['text_gray']};
+                    border-radius: 22px;
                 }}
                 QPushButton:hover {{
                     background: rgba(255, 255, 255, 0.05);
-                }}
-                QLabel {{
-                    color: {C['text_gray']};
                 }}
             """)
             
             btn.clicked.connect(lambda checked, idx=i: self.on_nav_click(idx))
             self.nav_buttons.append((btn, icon_label, text_label, color))
             layout.addWidget(btn)
+        
+        main_layout.addWidget(pill_container)
         
         # Set first button as active
         self.set_active(0)
@@ -152,37 +172,63 @@ class BottomNavBar(QFrame):
         self.nav_clicked.emit(idx)
     
     def set_active(self, idx):
-        """Set active navigation button with indicator"""
+        """Set active navigation button with modern pill style"""
         for i, (btn, icon_label, text_label, color) in enumerate(self.nav_buttons):
             if i == idx:
-                # Active state - with top indicator
+                # Active state - colored pill with glow
                 btn.setStyleSheet(f"""
                     QPushButton {{
-                        background: rgba(255, 255, 255, 0.08);
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                            stop:0 {color}, stop:1 {self.darken_color(color)});
                         border: none;
-                        border-top: 3px solid {color};
+                        border-radius: 22px;
                     }}
                     QPushButton:hover {{
-                        background: rgba(255, 255, 255, 0.12);
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                            stop:0 {self.lighten_color(color)}, stop:1 {color});
                     }}
                 """)
-                icon_label.setStyleSheet(f"background: transparent; font-size: 22px; color: {color};")
-                text_label.setStyleSheet(f"background: transparent; font-size: 10px; font-weight: 600; color: {color};")
+                icon_label.setStyleSheet("background: transparent; font-size: 20px; color: white;")
+                text_label.setStyleSheet("background: transparent; font-size: 11px; font-weight: 700; color: white; letter-spacing: 0.5px;")
             else:
-                # Inactive state
+                # Inactive state - transparent
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background: transparent;
                         border: none;
-                        border-top: 3px solid transparent;
+                        border-radius: 22px;
                     }}
                     QPushButton:hover {{
                         background: rgba(255, 255, 255, 0.05);
                     }}
                 """)
-                icon_label.setStyleSheet(f"background: transparent; font-size: 22px; color: {C['text_gray']};")
-                text_label.setStyleSheet(f"background: transparent; font-size: 10px; font-weight: 500; color: {C['text_gray']};")
-
+                icon_label.setStyleSheet("background: transparent; font-size: 20px; color: rgba(255, 255, 255, 0.5);")
+                text_label.setStyleSheet("background: transparent; font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.5);")
+    
+    def lighten_color(self, hex_color):
+        """Lighten a hex color"""
+        # Simple lighten by increasing RGB values
+        r = int(hex_color[1:3], 16)
+        g = int(hex_color[3:5], 16)
+        b = int(hex_color[5:7], 16)
+        
+        r = min(255, r + 30)
+        g = min(255, g + 30)
+        b = min(255, b + 30)
+        
+        return f"#{r:02x}{g:02x}{b:02x}"
+    
+    def darken_color(self, hex_color):
+        """Darken a hex color"""
+        r = int(hex_color[1:3], 16)
+        g = int(hex_color[3:5], 16)
+        b = int(hex_color[5:7], 16)
+        
+        r = max(0, r - 30)
+        g = max(0, g - 30)
+        b = max(0, b - 30)
+        
+        return f"#{r:02x}{g:02x}{b:02x}"
 
 class TaskCard(QFrame):
     clicked = pyqtSignal(dict)
