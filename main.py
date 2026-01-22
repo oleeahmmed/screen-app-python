@@ -1449,6 +1449,8 @@ class Dashboard(QWidget):
             # Update dashboard page header
             if hasattr(self.dash_page, 'header') and hasattr(self.dash_page.header, 'notification_bell'):
                 self.dash_page.header.notification_bell.set_count(count)
+        except Exception as e:
+            print(f"Update bell error: {e}")
     
     def on_task_notification_received(self, data):
         """Handle incoming task notification from WebSocket"""
