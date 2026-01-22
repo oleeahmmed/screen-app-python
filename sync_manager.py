@@ -50,8 +50,22 @@ class SyncManager:
                     else:
                         self.upload_queue = data.get('pending', [])
                         self.uploaded_files = set(data.get('uploaded', []))
+                
                 # Filter out files that no longer exist
-                self.upload_queue = [f for f in self.upload_queue if os.path.exists(f)]
+                # Handle both string paths and dict items
+                filtered_queue = []
+                for item in self.upload_queue:
+                    if isinstance(item, dict):
+                        # New format with metadata
+                        file_path = item.get('file_path', '')
+                        if file_path and os.path.exists(file_path):
+                            filtered_queue.append(item)
+                    elif isinstance(item, str):
+                        # Old format - just file path
+                        if os.path.exists(item):
+                            filtered_queue.append(item)
+                
+                self.upload_queue = filtered_queue
                 self.save_queue()
             except (json.JSONDecodeError, IOError):
                 self.upload_queue = []
@@ -75,8 +89,10 @@ class SyncManager:
             for file in files:
                 if file.endswith(('.webp', '.png', '.jpg', '.jpeg')):
                     file_path = os.path.join(root, file)
-                    if file_path not in self.uploaded_files and file_path not in self.upload_queue:
-                        self.upload_queue.append(file_path)
+                    # Check if not already in queue (compare file paths)
+                    existing_paths = [self._get_file_path(q) for q in self.upload_queue]
+                    if file_path not in self.uploaded_files and file_path not in existing_paths:
+                        self.upload_queue.append({'file_path': file_path, 'url_data': {}})
         
         self.save_queue()
 
@@ -93,12 +109,13 @@ class SyncManager:
                 server_paths = set(data.get('uploaded_paths', []))
                 
                 # Mark files as uploaded if server has them
-                for file_path in list(self.upload_queue):
+                for item in list(self.upload_queue):
+                    file_path = self._get_file_path(item)
                     rel_path = os.path.relpath(file_path, SCREENSHOTS_DIR)
                     if rel_path in server_paths:
                         self.uploaded_files.add(file_path)
-                        if file_path in self.upload_queue:
-                            self.upload_queue.remove(file_path)
+                        if item in self.upload_queue:
+                            self.upload_queue.remove(item)
                 
                 self.save_queue()
                 return True
@@ -107,11 +124,24 @@ class SyncManager:
         return False
 
     def add_to_queue(self, file_paths):
-        """Add files to upload queue"""
-        for path in file_paths:
-            if path not in self.upload_queue and path not in self.uploaded_files and os.path.exists(path):
-                self.upload_queue.append(path)
+        """Add files to upload queue - handles both dict and string formats"""
+        for item in file_paths:
+            # Handle new format (dict with file_path and url_data)
+            if isinstance(item, dict):
+                file_path = item.get('file_path')
+                if file_path and file_path not in [self._get_file_path(q) for q in self.upload_queue] and os.path.exists(file_path):
+                    self.upload_queue.append(item)
+            # Handle old format (string path)
+            else:
+                if item not in [self._get_file_path(q) for q in self.upload_queue] and os.path.exists(item):
+                    self.upload_queue.append({'file_path': item, 'url_data': {}})
         self.save_queue()
+    
+    def _get_file_path(self, item):
+        """Extract file path from queue item (handles both dict and string)"""
+        if isinstance(item, dict):
+            return item.get('file_path', item)
+        return item
 
     def start_sync(self):
         """Start background sync process"""
@@ -163,16 +193,19 @@ class SyncManager:
         # Get batch of files to upload
         batch = self.upload_queue[:self.batch_size]
         
-        for file_path in batch:
+        for item in batch:
             if not self.is_syncing:
                 break
             
-            success = self._upload_file(file_path, headers)
+            success = self._upload_file(item, headers)
+            
+            # Get file path for tracking
+            file_path = self._get_file_path(item)
             
             if success:
                 self.uploaded_files.add(file_path)
-                if file_path in self.upload_queue:
-                    self.upload_queue.remove(file_path)
+                if item in self.upload_queue:
+                    self.upload_queue.remove(item)
                 if self.on_sync_callback:
                     self.on_sync_callback(file_path, True)
             else:
@@ -188,9 +221,18 @@ class SyncManager:
         if self.upload_queue:
             time.sleep(self.batch_delay)
 
-    def _upload_file(self, file_path, headers):
-        """Upload a single file to server"""
-        if not os.path.exists(file_path):
+    def _upload_file(self, file_data, headers):
+        """Upload a single file with URL metadata to server"""
+        # Extract file path and url data
+        if isinstance(file_data, dict):
+            file_path = file_data.get('file_path')
+            url_data = file_data.get('url_data', {})
+        else:
+            # Old format - just file path string
+            file_path = file_data
+            url_data = {}
+        
+        if not file_path or not os.path.exists(file_path):
             return True  # File doesn't exist, consider it "uploaded"
 
         try:
@@ -199,7 +241,17 @@ class SyncManager:
             
             with open(file_path, 'rb') as f:
                 files = {'file': (os.path.basename(file_path), f, 'image/webp')}
-                data = {'relative_path': rel_path}
+                
+                # Prepare data with URL metadata
+                data = {
+                    'relative_path': rel_path,
+                    'detected_url': url_data.get('detected_url', ''),
+                    'detected_domain': url_data.get('detected_domain', ''),
+                    'page_title': url_data.get('page_title', ''),
+                    'browser_name': url_data.get('browser_name', ''),
+                    'is_browser_active': url_data.get('is_browser_active', False),
+                    'ocr_confidence': url_data.get('ocr_confidence', None),
+                }
                 
                 response = requests.post(
                     API_SCREENSHOT_UPLOAD_URL,
@@ -213,7 +265,6 @@ class SyncManager:
                 if response.status_code == 401:
                     print("401 Unauthorized - token may be expired")
                     self.access_denied_flag = True
-                    # Try to get more info from response
                     try:
                         data = response.json()
                         message = data.get('detail', 'Session expired. Please login again.')

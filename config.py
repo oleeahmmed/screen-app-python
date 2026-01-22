@@ -26,6 +26,8 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 SCREENSHOTS_DIR = os.path.join(BASE_DIR, "screenshots")
 AUTH_TOKEN_FILE = os.path.join(DATA_DIR, "auth_token.json")
 UPLOAD_QUEUE_FILE = os.path.join(DATA_DIR, "upload_queue.json")
+TC_ACCEPTANCE_FILE = os.path.join(DATA_DIR, "tc_accepted.json")
+PROFILE_INFO_FILE = os.path.join(DATA_DIR, "profile_info.json")
 
 # Screenshot Settings
 SCREENSHOT_INTERVAL = 30  # seconds

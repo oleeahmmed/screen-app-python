@@ -1,7 +1,7 @@
 # task_manager.py - Attendance & Task Manager
 
 import requests
-from config import API_CHECKIN_URL, API_CHECKOUT_URL, API_TASKS_URL
+from config import API_CHECKIN_URL, API_CHECKOUT_URL, API_TASKS_URL, API_BASE_URL
 
 
 class TaskManager:
@@ -9,6 +9,7 @@ class TaskManager:
         self.auth_manager = auth_manager
         self.current_attendance = None
         self.on_access_denied = None  # Callback when 403/401 received
+        self.on_work_duration_update = None  # Callback for work duration updates
 
     def _handle_403(self, response):
         """Handle 403 response - update auth and notify"""
@@ -182,3 +183,31 @@ class TaskManager:
             return response.status_code == 204
         except:
             return False
+
+    def get_current_attendance(self):
+        """Get current attendance with today's work duration and company timezone"""
+        headers = self.auth_manager.get_auth_header()
+        if not headers:
+            return None
+        
+        try:
+            response = requests.get(
+                f"{API_BASE_URL}/attendance/current/",
+                headers=headers,
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Update work duration if callback is set
+                if self.on_work_duration_update and 'today_work_duration' in data:
+                    duration = data['today_work_duration']
+                    company_tz = data.get('company_timezone', 'UTC')
+                    self.on_work_duration_update(duration['total_seconds'], company_tz)
+                
+                return data
+            elif response.status_code == 403:
+                self._handle_403(response)
+            return None
+        except:
+            return None

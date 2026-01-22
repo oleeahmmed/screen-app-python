@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Screen Monitor
+Exec=ScreenMonitor
+Icon=screenmonitor
+Type=Application
+Categories=Utility;

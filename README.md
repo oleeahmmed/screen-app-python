@@ -1,111 +1,153 @@
 # Screen Monitor - Desktop Client
 
-Employee monitoring desktop application for tracking screenshots, attendance, and tasks.
+Employee monitoring desktop application for screenshot tracking, attendance, and task management.
 
-## Features
+---
 
-- 📸 Automatic screenshot capture at regular intervals
-- ⏰ Attendance tracking with check-in/check-out
-- ✅ Task management
-- 🔄 Auto-sync with server
-- 🔐 Secure authentication with JWT
-- 📊 Subscription-based access control
+## �* Ubuntu/Linux
 
-## Requirements
+### 1. Install Python
+```bash
+sudo apt update
+sudo apt install python3 python3-pip python3-venv -y
+```
 
-- Python 3.8+
-- Windows/Linux/macOS
-- Active internet connection
-
-## Installation
-
-1. Clone the repository:
+### 2. Clone & Setup
 ```bash
 git clone git@github.com:ibitltd/screen-desktop-client.git
 cd screen-desktop-client
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-2. Create virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
+### 3. Install Libraries
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Configure API endpoint:
-Edit `config.py` and set your API server URL:
-```python
-API_BASE_URL = "https://your-server.com/api"
-```
-
-## Usage
-
-Run the application:
+### 4. Run Application
 ```bash
 python main.py
 ```
 
-### First Time Setup
-
-1. Enter your username and password
-2. Click "Login"
-3. The app will start monitoring automatically
-
-### Features
-
-- **Screenshot Capture**: Automatically captures screenshots every 30 seconds
-- **Attendance**: Auto check-in when you login, check-out when you close
-- **Tasks**: Manage your daily tasks
-- **Sync**: All data syncs automatically with the server
-
-## Configuration
-
-Edit `config.py` to customize:
-
-- `SCREENSHOT_INTERVAL`: Time between screenshots (seconds)
-- `IMAGE_QUALITY`: Screenshot quality (1-100)
-- `IMAGE_FORMAT`: Image format (WEBP, JPEG, PNG)
-- `CLEANUP_DAYS`: Days to keep local screenshots
-
-## Building Executable
-
-To create a standalone executable:
-
+### 5. Build Executable
 ```bash
+pip install pyinstaller
 pyinstaller --onefile --windowed --name="ScreenMonitor" main.py
+./dist/ScreenMonitor
 ```
 
-## Project Structure
+---
 
+## 🪟 Windows
+
+### 1. Install Python
+- Download from [python.org](https://www.python.org/downloads/)
+- Run installer, check **"Add Python to PATH"**
+- Click "Install Now"
+
+### 2. Clone & Setup
+```cmd
+git clone git@github.com:ibitltd/screen-desktop-client.git
+cd screen-desktop-client
+python -m venv venv
+venv\Scripts\activate
 ```
-desktop-app/
-├── main.py              # Main application entry
-├── auth.py              # Authentication handler
-├── config.py            # Configuration settings
-├── screenshot_service.py # Screenshot capture service
-├── sync_manager.py      # Server sync manager
-├── task_manager.py      # Task management
-├── cleanup.py           # Old file cleanup
-├── requirements.txt     # Python dependencies
-├── data/                # Local data storage
-└── screenshots/         # Captured screenshots
+
+### 3. Install Libraries
+```cmd
+pip install -r requirements.txt
 ```
 
-## Security
+### 4. Run Application
+```cmd
+python main.py
+```
 
-- All communication uses HTTPS
-- JWT tokens for authentication
-- Passwords are never stored locally
-- Screenshots are encrypted during transfer
+### 5. Build Executable
+```cmd
+pip install pyinstaller
+pyinstaller --onefile --windowed --name="ScreenMonitor" main.py
+dist\ScreenMonitor.exe
+```
 
-## Support
+---
 
-For issues and support, contact: support@igenhr.com
+## 🍎 macOS
 
-## License
+### 1. Install Python
+```bash
+# Install Homebrew first (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-Proprietary - IBIT Ltd © 2026
+# Install Python
+brew install python@3.11
+```
+
+### 2. Clone & Setup
+```bash
+git clone git@github.com:ibitltd/screen-desktop-client.git
+cd screen-desktop-client
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Libraries
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run Application
+```bash
+python main.py
+```
+
+### 5. Build Executable
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --name="ScreenMonitor" main.py
+open dist/ScreenMonitor.app
+```
+
+---
+
+## ⚙️ Configuration
+
+Edit `config.py` before running:
+```python
+API_BASE_URL = "https://att.igenhr.com/api"  # Your server URL
+SCREENSHOT_INTERVAL = 30  # Screenshot every 30 seconds
+```
+
+---
+
+## 📦 Required Libraries
+
+All libraries are in `requirements.txt`:
+- requests
+- Pillow
+- pyscreenshot
+
+Install with: `pip install -r requirements.txt`
+
+---
+
+## 🎯 Usage
+
+1. Run the application
+2. Login with your username/password
+3. Application will automatically:
+   - Capture screenshots
+   - Track attendance
+   - Sync with server
+
+---
+
+## 📞 Support
+
+Email: support@igenhr.com  
+Website: https://igenhr.com
+
+---
+
+**IBIT Ltd © 2026**

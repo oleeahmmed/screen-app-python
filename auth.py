@@ -84,6 +84,9 @@ class AuthManager:
                 
                 self.save_tokens()
                 
+                # Save profile info to config
+                self.save_profile_info(self.user_info)
+                
                 # Return access status
                 if self.access_granted:
                     return True, "Login successful", data
@@ -257,3 +260,188 @@ class AuthManager:
         self.error_code = error_code
         self.access_message = message
         self.save_tokens()
+
+    def get_user_profile(self):
+        """Get user profile data"""
+        headers = self.get_auth_header()
+        if not headers:
+            print("No auth header available")
+            return False, None
+        
+        try:
+            from config import API_BASE_URL
+            # API_BASE_URL already includes /api, so just add /user/profile/
+            url = f"{API_BASE_URL}/user/profile/"
+            print(f"Fetching profile from: {url}")
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            print(f"Profile response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    print(f"Profile data received: {data.keys() if data else 'None'}")
+                    return True, data
+                except ValueError as e:
+                    print(f"JSON parse error: {e}")
+                    print(f"Response text: {response.text[:200]}")
+                    return False, None
+            else:
+                print(f"Profile fetch failed: {response.status_code}")
+                print(f"Response: {response.text[:200]}")
+                return False, None
+        except requests.exceptions.ConnectionError as e:
+            print(f"Connection error: {e}")
+            return False, None
+        except Exception as e:
+            print(f"Get profile error: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, None
+
+    def update_user_profile(self, email, first_name, last_name):
+        """Update user profile"""
+        headers = self.get_auth_header()
+        if not headers:
+            return False, "Not authenticated"
+        
+        try:
+            from config import API_BASE_URL
+            response = requests.put(
+                f"{API_BASE_URL}/user/profile/",
+                headers=headers,
+                json={
+                    'email': email,
+                    'first_name': first_name,
+                    'last_name': last_name
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                # Update cached user info
+                if self.user_info:
+                    self.user_info['email'] = email
+                    self.user_info['first_name'] = first_name
+                    self.user_info['last_name'] = last_name
+                    self.save_tokens()
+                return True, "Profile updated successfully"
+            else:
+                data = response.json()
+                return False, data.get('error', 'Failed to update profile')
+        except Exception as e:
+            print(f"Update profile error: {e}")
+            return False, str(e)
+
+    def change_password(self, current_password, new_password):
+        """Change user password"""
+        headers = self.get_auth_header()
+        if not headers:
+            return False, "Not authenticated"
+        
+        try:
+            from config import API_BASE_URL
+            response = requests.post(
+                f"{API_BASE_URL}/user/change-password/",
+                headers=headers,
+                json={
+                    'current_password': current_password,
+                    'new_password': new_password
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                return True, "Password changed successfully"
+            else:
+                data = response.json()
+                return False, data.get('error', 'Failed to change password')
+        except Exception as e:
+            print(f"Change password error: {e}")
+            return False, str(e)
+
+    def upload_profile_photo(self, file_path):
+        """Upload profile photo"""
+        headers = self.get_auth_header()
+        if not headers:
+            print("No auth header for photo upload")
+            return False, "Not authenticated"
+        
+        try:
+            from config import API_BASE_URL
+            url = f"{API_BASE_URL}/user/upload-photo/"
+            print(f"Uploading photo to: {url}")
+            print(f"File path: {file_path}")
+            
+            with open(file_path, 'rb') as f:
+                files = {'profile_photo': f}
+                print(f"Sending file...")
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    files=files,
+                    timeout=30
+                )
+            
+            print(f"Upload response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    print(f"Upload success: {data}")
+                    # Update cached user info
+                    if self.user_info:
+                        self.user_info['profile_photo'] = data.get('profile_photo')
+                        self.save_tokens()
+                    return True, "Photo uploaded successfully"
+                except ValueError as e:
+                    print(f"JSON parse error: {e}")
+                    print(f"Response text: {response.text[:200]}")
+                    return False, "Invalid response from server"
+            else:
+                print(f"Upload failed: {response.text[:200]}")
+                try:
+                    data = response.json()
+                    return False, data.get('error', 'Failed to upload photo')
+                except:
+                    return False, f"Upload failed with status {response.status_code}"
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+            return False, "File not found"
+        except Exception as e:
+            print(f"Upload photo error: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, str(e)
+
+    def save_profile_info(self, user_info):
+        """Save profile info to config file"""
+        from config import PROFILE_INFO_FILE
+        
+        try:
+            if user_info:
+                data = {
+                    'id': user_info.get('id'),
+                    'username': user_info.get('username'),
+                    'email': user_info.get('email'),
+                    'first_name': user_info.get('first_name', ''),
+                    'last_name': user_info.get('last_name', ''),
+                    'full_name': user_info.get('full_name', '')
+                }
+                with open(PROFILE_INFO_FILE, 'w') as f:
+                    json.dump(data, f)
+                print("Profile info saved")
+        except Exception as e:
+            print(f"Error saving profile info: {e}")
+    
+    def load_profile_info(self):
+        """Load profile info from config file"""
+        from config import PROFILE_INFO_FILE
+        
+        try:
+            if os.path.exists(PROFILE_INFO_FILE):
+                with open(PROFILE_INFO_FILE, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"Error loading profile info: {e}")
+        return None
