@@ -238,7 +238,7 @@ class ChatPage(QWidget):
         header_layout = QHBoxLayout(self.chat_header)
         header_layout.setContentsMargins(20, 10, 20, 10)
         
-        self.chat_user_name = QLabel("Select a user")
+        self.chat_user_name = QLabel("")
         self.chat_user_name.setStyleSheet(f"color: {C['text_white']}; font-size: 16px; font-weight: 600; background: transparent;")
         header_layout.addWidget(self.chat_user_name)
         
