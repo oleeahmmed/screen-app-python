@@ -41,22 +41,23 @@ class WhatsAppMessageBubble(QWidget):
         bubble.setMaximumWidth(400)
         
         if is_sent:
-            # Sent message - WhatsApp green
-            bubble.setStyleSheet(f"""
-                QFrame {{
-                    background: {WA_SENT_BUBBLE};
-                    border-radius: 8px;
-                    border-top-right-radius: 0px;
-                }}
+            # Sent message - app green gradient
+            bubble.setStyleSheet("""
+                QFrame {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                        stop:0 #10B981, stop:1 #059669);
+                    border-radius: 12px;
+                    border-top-right-radius: 2px;
+                }
             """)
         else:
-            # Received message - WhatsApp dark gray
-            bubble.setStyleSheet(f"""
-                QFrame {{
-                    background: {WA_RECEIVED_BUBBLE};
-                    border-radius: 8px;
-                    border-top-left-radius: 0px;
-                }}
+            # Received message - subtle gray
+            bubble.setStyleSheet("""
+                QFrame {
+                    background: rgba(255, 255, 255, 0.12);
+                    border-radius: 12px;
+                    border-top-left-radius: 2px;
+                }
             """)
         
         bubble_layout = QVBoxLayout(bubble)
@@ -67,7 +68,7 @@ class WhatsAppMessageBubble(QWidget):
         message_text = message_data.get('message', '')
         text_label = QLabel(message_text)
         text_label.setWordWrap(True)
-        text_label.setStyleSheet(f"color: {WA_TEXT_PRIMARY}; font-size: 14px; background: transparent;")
+        text_label.setStyleSheet("color: white; font-size: 14px; background: transparent;")
         bubble_layout.addWidget(text_label)
         
         # Time at bottom right
@@ -86,7 +87,7 @@ class WhatsAppMessageBubble(QWidget):
         
         time_label = QLabel(time_str)
         time_label.setAlignment(Qt.AlignRight)
-        time_label.setStyleSheet(f"color: {WA_TEXT_SECONDARY}; font-size: 11px; background: transparent;")
+        time_label.setStyleSheet("color: rgba(255, 255, 255, 0.7); font-size: 11px; background: transparent;")
         bubble_layout.addWidget(time_label)
         
         main_layout.addWidget(bubble)
@@ -106,9 +107,9 @@ class WhatsAppUserCard(QFrame):
         self.setCursor(Qt.PointingHandCursor)
         self.setFixedHeight(72)
         
-        # WhatsApp style background
+        # Modern style background
         if is_active:
-            bg_color = WA_HOVER
+            bg_color = "rgba(255, 255, 255, 0.12)"
         else:
             bg_color = "transparent"
         
@@ -118,7 +119,7 @@ class WhatsAppUserCard(QFrame):
                 border: none;
             }}
             QFrame:hover {{
-                background: {WA_HOVER};
+                background: rgba(255, 255, 255, 0.08);
             }}
         """)
         
@@ -130,12 +131,12 @@ class WhatsAppUserCard(QFrame):
         avatar = QLabel("👤")
         avatar.setFixedSize(50, 50)
         avatar.setAlignment(Qt.AlignCenter)
-        avatar.setStyleSheet(f"""
-            QLabel {{
-                background: {WA_INPUT_BG};
+        avatar.setStyleSheet("""
+            QLabel {
+                background: rgba(255, 255, 255, 0.1);
                 border-radius: 25px;
                 font-size: 24px;
-            }}
+            }
         """)
         layout.addWidget(avatar)
         
@@ -147,14 +148,14 @@ class WhatsAppUserCard(QFrame):
         if len(name) > 20:
             name = name[:20] + "..."
         name_label = QLabel(name)
-        name_label.setStyleSheet(f"color: {WA_TEXT_PRIMARY}; font-size: 16px; font-weight: 400; background: transparent;")
+        name_label.setStyleSheet("color: rgba(255, 255, 255, 0.95); font-size: 16px; font-weight: 400; background: transparent;")
         info_layout.addWidget(name_label)
         
         # Last message or status
         is_online = user_data.get('is_online', False)
         status_text = "Online" if is_online else "Offline"
         status_label = QLabel(status_text)
-        status_label.setStyleSheet(f"color: {WA_TEXT_SECONDARY}; font-size: 14px; background: transparent;")
+        status_label.setStyleSheet("color: rgba(255, 255, 255, 0.6); font-size: 14px; background: transparent;")
         info_layout.addWidget(status_label)
         
         layout.addLayout(info_layout, 1)
@@ -175,14 +176,15 @@ class WhatsAppUserCard(QFrame):
             badge = QLabel(str(min(unread_count, 99)))
             badge.setFixedSize(22, 22)
             badge.setAlignment(Qt.AlignCenter)
-            badge.setStyleSheet(f"""
-                QLabel {{
-                    background: {WA_ONLINE_GREEN};
-                    color: {WA_BG_DARK};
+            badge.setStyleSheet("""
+                QLabel {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                        stop:0 #10B981, stop:1 #059669);
+                    color: white;
                     border-radius: 11px;
                     font-size: 12px;
                     font-weight: 600;
-                }}
+                }
             """)
             right_layout.addWidget(badge)
         
@@ -218,13 +220,23 @@ class ChatPage(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # WhatsApp style - no gradient background, just splitter
+        # Use app's gradient background like other pages
+        self.container = GradientWidget()
+        self.container.setStyleSheet("background: transparent;")
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
+        
+        # Splitter with subtle styling
         splitter = QSplitter(Qt.Horizontal)
-        splitter.setStyleSheet(f"""
-            QSplitter::handle {{
-                background: {WA_BORDER};
-                width: 1px;
-            }}
+        splitter.setStyleSheet("""
+            QSplitter::handle {
+                background: rgba(255, 255, 255, 0.1);
+                width: 2px;
+            }
+            QSplitter::handle:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
         """)
         
         # User list
@@ -240,28 +252,29 @@ class ChatPage(QWidget):
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
         
-        layout.addWidget(splitter)
+        container_layout.addWidget(splitter)
+        layout.addWidget(self.container)
     
     def create_user_list(self):
-        """WhatsApp style user list"""
+        """Modern user list matching app style"""
         panel = QWidget()
         panel.setMinimumWidth(300)
         panel.setMaximumWidth(450)
-        panel.setStyleSheet(f"background: {WA_PANEL_BG}; border-right: 1px solid {WA_BORDER};")
+        panel.setStyleSheet("background: rgba(0, 0, 0, 0.2); border-right: 1px solid rgba(255, 255, 255, 0.1);")
         
         panel_layout = QVBoxLayout(panel)
         panel_layout.setContentsMargins(0, 0, 0, 0)
         panel_layout.setSpacing(0)
         
-        # WhatsApp header
+        # Modern header
         header = QFrame()
         header.setFixedHeight(60)
-        header.setStyleSheet(f"background: {WA_PANEL_BG}; border-bottom: 1px solid {WA_BORDER};")
+        header.setStyleSheet("background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid rgba(255, 255, 255, 0.1);")
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(16, 10, 16, 10)
         
         chats_label = QLabel("Chats")
-        chats_label.setStyleSheet(f"color: {WA_TEXT_PRIMARY}; font-size: 24px; font-weight: 600; background: transparent;")
+        chats_label.setStyleSheet("color: rgba(255, 255, 255, 0.95); font-size: 24px; font-weight: 600; background: transparent;")
         header_layout.addWidget(chats_label)
         header_layout.addStretch()
         
@@ -271,23 +284,23 @@ class ChatPage(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
-                background: {WA_PANEL_BG};
+        scroll.setStyleSheet("""
+            QScrollArea {
+                background: transparent;
                 border: none;
-            }}
-            QScrollBar:vertical {{
-                background: {WA_PANEL_BG};
+            }
+            QScrollBar:vertical {
+                background: rgba(0, 0, 0, 0.2);
                 width: 6px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {WA_INPUT_BG};
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(255, 255, 255, 0.3);
                 border-radius: 3px;
-            }}
+            }
         """)
         
         self.user_list_widget = QWidget()
-        self.user_list_widget.setStyleSheet(f"background: {WA_PANEL_BG};")
+        self.user_list_widget.setStyleSheet("background: transparent;")
         self.user_list_layout = QVBoxLayout(self.user_list_widget)
         self.user_list_layout.setContentsMargins(0, 0, 0, 0)
         self.user_list_layout.setSpacing(0)
@@ -299,18 +312,18 @@ class ChatPage(QWidget):
         return panel
     
     def create_chat_area(self):
-        """WhatsApp style chat area"""
+        """Modern chat area matching app style"""
         panel = QWidget()
-        panel.setStyleSheet(f"background: {WA_BG_DARK};")
+        panel.setStyleSheet("background: rgba(0, 0, 0, 0.15);")
         
         panel_layout = QVBoxLayout(panel)
         panel_layout.setContentsMargins(0, 0, 0, 0)
         panel_layout.setSpacing(0)
         
-        # Chat header - WhatsApp style
+        # Chat header - modern style
         self.chat_header = QFrame()
         self.chat_header.setFixedHeight(60)
-        self.chat_header.setStyleSheet(f"background: {WA_PANEL_BG}; border-bottom: 1px solid {WA_BORDER};")
+        self.chat_header.setStyleSheet("background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid rgba(255, 255, 255, 0.1);")
         
         header_layout = QHBoxLayout(self.chat_header)
         header_layout.setContentsMargins(16, 10, 16, 10)
@@ -320,7 +333,7 @@ class ChatPage(QWidget):
         avatar = QLabel("👤")
         avatar.setFixedSize(40, 40)
         avatar.setAlignment(Qt.AlignCenter)
-        avatar.setStyleSheet(f"background: {WA_INPUT_BG}; border-radius: 20px; font-size: 20px;")
+        avatar.setStyleSheet("background: rgba(255, 255, 255, 0.1); border-radius: 20px; font-size: 20px;")
         header_layout.addWidget(avatar)
         
         # Name and status
@@ -328,11 +341,11 @@ class ChatPage(QWidget):
         info_layout.setSpacing(2)
         
         self.chat_user_name = QLabel("")
-        self.chat_user_name.setStyleSheet(f"color: {WA_TEXT_PRIMARY}; font-size: 16px; font-weight: 400; background: transparent;")
+        self.chat_user_name.setStyleSheet("color: rgba(255, 255, 255, 0.95); font-size: 16px; font-weight: 400; background: transparent;")
         info_layout.addWidget(self.chat_user_name)
         
         self.chat_user_status = QLabel("")
-        self.chat_user_status.setStyleSheet(f"color: {WA_TEXT_SECONDARY}; font-size: 13px; background: transparent;")
+        self.chat_user_status.setStyleSheet("color: rgba(255, 255, 255, 0.6); font-size: 13px; background: transparent;")
         info_layout.addWidget(self.chat_user_status)
         
         header_layout.addLayout(info_layout)
@@ -340,27 +353,27 @@ class ChatPage(QWidget):
         
         panel_layout.addWidget(self.chat_header)
         
-        # Messages scroll - WhatsApp background pattern
+        # Messages scroll - modern styling
         self.messages_scroll = QScrollArea()
         self.messages_scroll.setWidgetResizable(True)
         self.messages_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.messages_scroll.setStyleSheet(f"""
-            QScrollArea {{
-                background: {WA_BG_DARK};
+        self.messages_scroll.setStyleSheet("""
+            QScrollArea {
+                background: transparent;
                 border: none;
-            }}
-            QScrollBar:vertical {{
-                background: {WA_BG_DARK};
+            }
+            QScrollBar:vertical {
+                background: rgba(0, 0, 0, 0.2);
                 width: 6px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {WA_INPUT_BG};
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(255, 255, 255, 0.3);
                 border-radius: 3px;
-            }}
+            }
         """)
         
         self.messages_widget = QWidget()
-        self.messages_widget.setStyleSheet(f"background: {WA_BG_DARK};")
+        self.messages_widget.setStyleSheet("background: transparent;")
         self.messages_layout = QVBoxLayout(self.messages_widget)
         self.messages_layout.setContentsMargins(10, 10, 10, 10)
         self.messages_layout.setSpacing(2)
@@ -371,14 +384,14 @@ class ChatPage(QWidget):
         
         # Typing indicator
         self.typing_indicator = QLabel("")
-        self.typing_indicator.setStyleSheet(f"color: {WA_ONLINE_GREEN}; font-size: 13px; font-style: italic; background: {WA_BG_DARK}; padding: 5px 16px;")
+        self.typing_indicator.setStyleSheet("color: #10B981; font-size: 13px; font-style: italic; background: transparent; padding: 5px 16px;")
         self.typing_indicator.hide()
         panel_layout.addWidget(self.typing_indicator)
         
-        # Input - WhatsApp style
+        # Input - modern style
         input_container = QFrame()
         input_container.setFixedHeight(62)
-        input_container.setStyleSheet(f"background: {WA_PANEL_BG}; border-top: 1px solid {WA_BORDER};")
+        input_container.setStyleSheet("background: rgba(0, 0, 0, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.1);")
         
         input_layout = QHBoxLayout(input_container)
         input_layout.setContentsMargins(16, 10, 16, 10)
@@ -387,18 +400,21 @@ class ChatPage(QWidget):
         self.message_input = QLineEdit()
         self.message_input.setPlaceholderText("Type a message")
         self.message_input.setFixedHeight(42)
-        self.message_input.setStyleSheet(f"""
-            QLineEdit {{
-                background: {WA_INPUT_BG};
-                color: {WA_TEXT_PRIMARY};
-                border: none;
+        self.message_input.setStyleSheet("""
+            QLineEdit {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 21px;
                 padding: 0 16px;
                 font-size: 15px;
-            }}
-            QLineEdit::placeholder {{
-                color: {WA_TEXT_SECONDARY};
-            }}
+            }
+            QLineEdit::placeholder {
+                color: rgba(255, 255, 255, 0.5);
+            }
+            QLineEdit:focus {
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
         """)
         self.message_input.returnPressed.connect(self.send_message)
         self.message_input.textChanged.connect(self.on_typing)
@@ -407,22 +423,24 @@ class ChatPage(QWidget):
         self.send_button = QPushButton("➤")
         self.send_button.setFixedSize(42, 42)
         self.send_button.setCursor(Qt.PointingHandCursor)
-        self.send_button.setStyleSheet(f"""
-            QPushButton {{
-                background: {WA_ONLINE_GREEN};
-                color: {WA_BG_DARK};
+        self.send_button.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #10B981, stop:1 #059669);
+                color: white;
                 border: none;
                 border-radius: 21px;
                 font-size: 20px;
                 font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background: #06CF9C;
-            }}
-            QPushButton:disabled {{
-                background: {WA_INPUT_BG};
-                color: {WA_TEXT_SECONDARY};
-            }}
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #34D399, stop:1 #10B981);
+            }
+            QPushButton:disabled {
+                background: rgba(255, 255, 255, 0.1);
+                color: rgba(255, 255, 255, 0.3);
+            }
         """)
         self.send_button.clicked.connect(self.send_message)
         self.send_button.setEnabled(False)
@@ -468,7 +486,7 @@ class ChatPage(QWidget):
         
         if not filtered_users:
             empty = QLabel("No users")
-            empty.setStyleSheet(f"color: {WA_TEXT_SECONDARY}; font-size: 14px; padding: 40px; background: transparent;")
+            empty.setStyleSheet("color: rgba(255, 255, 255, 0.5); font-size: 14px; padding: 40px; background: transparent;")
             empty.setAlignment(Qt.AlignCenter)
             self.user_list_layout.insertWidget(0, empty)
         else:
