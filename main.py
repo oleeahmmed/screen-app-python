@@ -2562,6 +2562,9 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.dash)
         self.dash.access_granted = access_granted
         self.dash.start_auto()
+        
+        # Fetch work duration and company timezone immediately after login
+        self.fetch_work_duration()
     
     def should_show_tc(self):
         """Check if T&C has been accepted"""
@@ -2639,7 +2642,8 @@ class MainWindow(QMainWindow):
     
     def fetch_work_duration(self):
         """Fetch current attendance and work duration from API"""
-        if self.auth.is_logged_in() and self.stack.currentIndex() == 1:  # Dashboard is showing
+        if self.auth.is_logged_in():
+            # Fetch attendance data which includes company timezone
             self.task.get_current_attendance()
     
     def update_work_duration(self, total_seconds, company_timezone):

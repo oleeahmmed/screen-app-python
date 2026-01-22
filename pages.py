@@ -650,15 +650,41 @@ class ProfilePage(QWidget):
             return
         
         try:
+            # First try to load from cached profile info
             profile_info = self.auth.load_profile_info()
             if profile_info:
                 self.email_input.setText(profile_info.get('email', ''))
                 self.fname_input.setText(profile_info.get('first_name', ''))
                 self.lname_input.setText(profile_info.get('last_name', ''))
                 self.profile_loaded = True
-                print("Profile data loaded from config")
+                print("Profile data loaded from cache")
+                return
+            
+            # If no cached data, try to fetch from API
+            print("No cached profile, fetching from API...")
+            ok, data = self.auth.get_user_profile()
+            if ok and data:
+                self.email_input.setText(data.get('email', ''))
+                self.fname_input.setText(data.get('first_name', ''))
+                self.lname_input.setText(data.get('last_name', ''))
+                # Save to cache
+                self.auth.save_profile_info(data)
+                self.profile_loaded = True
+                print("Profile data loaded from API")
+            else:
+                print("Failed to load profile from API")
+                # Set default values from user_info if available
+                if self.auth.user_info:
+                    self.email_input.setText(self.auth.user_info.get('email', ''))
+                    self.fname_input.setText(self.auth.user_info.get('first_name', ''))
+                    self.lname_input.setText(self.auth.user_info.get('last_name', ''))
+                self.profile_loaded = True
         except Exception as e:
             print(f"Error loading profile: {e}")
+            import traceback
+            traceback.print_exc()
+            # Don't crash, just mark as loaded to prevent retry
+            self.profile_loaded = True
     
     def update_profile(self):
         email = self.email_input.text().strip()
@@ -706,5 +732,5 @@ class ProfilePage(QWidget):
         """Load profile data when page is shown"""
         super().showEvent(event)
         if not self.profile_loaded:
-            from PyQt5.QtCore import QTimer
-            QTimer.singleShot(100, self.load_profile_data)
+            # Load profile data directly without QTimer to avoid segfault
+            self.load_profile_data()

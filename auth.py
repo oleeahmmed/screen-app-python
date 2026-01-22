@@ -445,3 +445,81 @@ class AuthManager:
         except Exception as e:
             print(f"Error loading profile info: {e}")
         return None
+
+    def update_user_profile(self, email, first_name, last_name):
+        """Update user profile information"""
+        headers = self.get_auth_header()
+        if not headers:
+            return False, "Not authenticated"
+        
+        try:
+            from config import API_BASE_URL
+            url = f"{API_BASE_URL}/user/profile/"
+            
+            data = {
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name
+            }
+            
+            response = requests.patch(url, headers=headers, json=data, timeout=10)
+            
+            if response.status_code == 200:
+                profile_data = response.json()
+                # Update cached user info
+                if self.user_info:
+                    self.user_info['email'] = email
+                    self.user_info['first_name'] = first_name
+                    self.user_info['last_name'] = last_name
+                    self.user_info['full_name'] = f"{first_name} {last_name}".strip()
+                    self.save_tokens()
+                
+                # Save to profile info file
+                self.save_profile_info(profile_data)
+                return True, "Profile updated successfully"
+            else:
+                try:
+                    error_data = response.json()
+                    return False, error_data.get('error', 'Failed to update profile')
+                except:
+                    return False, f"Update failed with status {response.status_code}"
+        except requests.exceptions.ConnectionError:
+            return False, "Cannot connect to server"
+        except Exception as e:
+            print(f"Update profile error: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, str(e)
+    
+    def change_password(self, current_password, new_password):
+        """Change user password"""
+        headers = self.get_auth_header()
+        if not headers:
+            return False, "Not authenticated"
+        
+        try:
+            from config import API_BASE_URL
+            url = f"{API_BASE_URL}/user/change-password/"
+            
+            data = {
+                'current_password': current_password,
+                'new_password': new_password
+            }
+            
+            response = requests.post(url, headers=headers, json=data, timeout=10)
+            
+            if response.status_code == 200:
+                return True, "Password changed successfully"
+            else:
+                try:
+                    error_data = response.json()
+                    return False, error_data.get('error', 'Failed to change password')
+                except:
+                    return False, f"Change password failed with status {response.status_code}"
+        except requests.exceptions.ConnectionError:
+            return False, "Cannot connect to server"
+        except Exception as e:
+            print(f"Change password error: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, str(e)
