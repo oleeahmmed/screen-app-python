@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Screenshots and Data
+screenshots/
+data/
+*.json
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Images (except logo)
+*.png
+*.jpg
+*.jpeg
+*.webp
+!IBIT-Logo-V3.png
+
+# Temporary files
+*.tmp
+*.bak
