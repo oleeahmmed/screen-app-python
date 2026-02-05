@@ -36,7 +36,7 @@ pip install pyinstaller
 
 ### Step 4: Application Build করুন
 ```cmd
-pyinstaller --onefile --noconsole --name=ScreenMonitor --icon=IBIT-Logo-V3.png main.py
+pyinstaller --onefile --noconsole --name=ScreenMonitor --icon=att-logo.png main.py
 ```
 
 অথবা spec file ব্যবহার করে:

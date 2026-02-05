@@ -417,10 +417,10 @@ class DashboardPage(QWidget):
         
         # Company Time Clock - Glass Card
         company_clock_card = GlassCard()
-        company_clock_card.setFixedSize(160, 110)
+        company_clock_card.setFixedSize(160, 90)
         company_layout = QVBoxLayout(company_clock_card)
-        company_layout.setContentsMargins(15, 12, 15, 12)
-        company_layout.setSpacing(5)
+        company_layout.setContentsMargins(15, 10, 15, 10)
+        company_layout.setSpacing(4)
         company_layout.setAlignment(Qt.AlignCenter)
         
         self.company_tz_label = QLabel("COMPANY TIME")
@@ -448,10 +448,10 @@ class DashboardPage(QWidget):
         
         # User Local Time Clock - Glass Card
         user_clock_card = GlassCard()
-        user_clock_card.setFixedSize(160, 110)
+        user_clock_card.setFixedSize(160, 90)
         user_layout = QVBoxLayout(user_clock_card)
-        user_layout.setContentsMargins(15, 12, 15, 12)
-        user_layout.setSpacing(5)
+        user_layout.setContentsMargins(15, 10, 15, 10)
+        user_layout.setSpacing(4)
         user_layout.setAlignment(Qt.AlignCenter)
         
         self.local_tz_label = QLabel("YOUR TIME")
@@ -765,14 +765,14 @@ class LoginWidget(QWidget):
         
         container_layout.addStretch()
         
-        # IBIT Logo
+        # ATT Logo
         logo_label = QLabel()
-        logo_pixmap = QPixmap("IBIT-Logo-V3.png")
+        logo_pixmap = QPixmap("att-logo.png")
         if not logo_pixmap.isNull():
             logo_pixmap = logo_pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             logo_label.setPixmap(logo_pixmap)
         else:
-            logo_label.setText("IBIT")
+            logo_label.setText("ATT")
             logo_label.setStyleSheet(f"background: transparent; color: {C['text_white']}; font-size: 36px; font-weight: bold;")
         logo_label.setAlignment(Qt.AlignCenter)
         logo_label.setStyleSheet("background: transparent;")

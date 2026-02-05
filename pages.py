@@ -100,10 +100,10 @@ class DashboardPage(QWidget):
         
         # Company Time Clock
         company_clock_card = GlassCard()
-        company_clock_card.setFixedSize(160, 110)
+        company_clock_card.setFixedSize(160, 90)
         company_layout = QVBoxLayout(company_clock_card)
-        company_layout.setContentsMargins(15, 12, 15, 12)
-        company_layout.setSpacing(5)
+        company_layout.setContentsMargins(15, 10, 15, 10)
+        company_layout.setSpacing(4)
         company_layout.setAlignment(Qt.AlignCenter)
         
         self.company_tz_label = QLabel("COMPANY TIME")
@@ -131,10 +131,10 @@ class DashboardPage(QWidget):
         
         # User Local Time Clock
         user_clock_card = GlassCard()
-        user_clock_card.setFixedSize(160, 110)
+        user_clock_card.setFixedSize(160, 90)
         user_layout = QVBoxLayout(user_clock_card)
-        user_layout.setContentsMargins(15, 12, 15, 12)
-        user_layout.setSpacing(5)
+        user_layout.setContentsMargins(15, 10, 15, 10)
+        user_layout.setSpacing(4)
         user_layout.setAlignment(Qt.AlignCenter)
         
         self.local_tz_label = QLabel("YOUR TIME")
